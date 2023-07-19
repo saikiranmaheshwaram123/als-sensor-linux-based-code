@@ -270,8 +270,7 @@ static const struct iio_buffer_setup_ops apds9960_buffer_setup_ops = {
 	.predisable = &apds9960_als_buffer_predisable,
 };
 
-static int apds9960_probe(struct i2c_client *client,
-			  const struct i2c_device_id *id)
+static int apds9960_probe(struct i2c_client *client)
 {
 	struct apds9960_data *data;
 	struct iio_dev *indio_dev;
@@ -280,6 +279,16 @@ static int apds9960_probe(struct i2c_client *client,
 	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
 	if (!indio_dev)
 		return -ENOMEM;
+
+ 	indio_dev->name = APDS9960_DRV_NAME;
+	indio_dev->channels = apds9960_channels;
+	indio_dev->num_channels = ARRAY_SIZE(apds9960_channels);
+	indio_dev->info = &apds9960_info;
+	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->available_scan_masks = apds9960_scan_masks;
+	indio_dev->channels[0].ext_info = apds9960_intensity_ext_info;
+
+	
 
 	data = iio_priv(indio_dev);
 	data->client = client;
@@ -308,13 +317,7 @@ static int apds9960_probe(struct i2c_client *client,
 		return ret;
 	}
 
-	indio_dev->name = APDS9960_DRV_NAME;
-	indio_dev->channels = apds9960_channels;
-	indio_dev->num_channels = ARRAY_SIZE(apds9960_channels);
-	indio_dev->info = &apds9960_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
-	indio_dev->available_scan_masks = apds9960_scan_masks;
-	indio_dev->channels[0].ext_info = apds9960_intensity_ext_info;
+	
 
 	ret = iio_triggered_event_setup(indio_dev, 0,
 					&apds9960_als_write_event_config,
